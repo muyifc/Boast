@@ -10,11 +10,12 @@ public class RoomItem : MonoBehaviour {
     private Transform[] seats;
 
     void Awake(){
-        topSeat = gameObject.Find<Transform>("TopSeat");
-        bottomSeat = gameObject.Find<Transform>("BottomSeat");
-        leftSeat = gameObject.Find<Transform>("leftSeat");
-        rightSeat = gameObject.Find<Transform>("RightSeat");
-    
+        topSeat = gameObject.Find<Transform>("Seats/TopSeat");
+        bottomSeat = gameObject.Find<Transform>("Seats/BottomSeat");
+        leftSeat = gameObject.Find<Transform>("Seats/LeftSeat");
+        rightSeat = gameObject.Find<Transform>("Seats/RightSeat");
+
+        seats = new Transform[RoomManager.RoomMaxPlayer];
         seats[(int)RoomSeatEnum.Top] = topSeat;
         seats[(int)RoomSeatEnum.Bottom] = bottomSeat;
         seats[(int)RoomSeatEnum.Left] = leftSeat;

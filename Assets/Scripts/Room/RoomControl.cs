@@ -11,7 +11,8 @@ public class RoomControl {
     
     public void Init(){
         roomPlayers = new List<PlayerControl>(RoomManager.RoomMaxPlayer);
-        roomItem = ResourceManager.Instance.Load<RoomItem>("Prefabs/RoomItem");
+        roomItem = ResourceManager.Instance.Load<RoomItem>("Prefabs/RoomItem.prefab");
+        roomItem.transform.SetParent(SceneManager.Instance.UICanvas.transform,false);
     }
 
     public void Clear(){
@@ -46,6 +47,8 @@ public class RoomControl {
 
     /// 更新玩家座次
     private void updateSeat(){
-        
+        for(int i = 0;i < roomPlayers.Count;++i){
+            
+        }
     }
 }

@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using System.IO;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -24,9 +25,19 @@ public class ResourceManager : Singleton<ResourceManager> {
 
     /// 加载 Bundle
     private Object getAsset(string path){
+        path = getFullPath(path);
 #if UNITY_EDITOR
+        path = getRelatePath(path);
         Object asset = AssetDatabase.LoadAssetAtPath<Object>(path);
         return asset;
 #endif  
+    }
+
+    private string getFullPath(string path){
+        return Path.Combine(Application.dataPath,path);
+    }
+
+    private string getRelatePath(string path){
+        return path.Substring(path.IndexOf("Assets"));
     }
 }
