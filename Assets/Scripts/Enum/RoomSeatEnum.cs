@@ -1,7 +1,7 @@
 /// 房间座位
 public enum RoomSeatEnum {
-    Top,
     Bottom,
+    Right,
+    Top,
     Left,
-    Right
 }

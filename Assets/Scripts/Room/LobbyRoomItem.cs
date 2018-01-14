@@ -16,11 +16,13 @@ public class LobbyRoomItem : MonoBehaviour {
         roomName = gameObject.Find<Text>("Name/Text");
         curNum = gameObject.Find<Text>("Num/Text");
         btnJoin = gameObject.Find<Button>("BtnJoin/Button");
+    }
 
+    void OnEnable(){
         btnJoin.onClick.AddListener(onJoin);
     }
 
-    void OnDestroy(){
+    void OnDisable(){
         btnJoin.onClick.RemoveListener(onJoin);
     }
 

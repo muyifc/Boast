@@ -2,17 +2,20 @@ using UnityEngine;
 using System.Collections;
 
 public class PlayerControl {
-    private PlayerData playerData;
-    private PlayerItem playerItem;
-    private RoomControl roomControl;
+    public PlayerData playerData;
+    public RoomControl roomControl;
+    public bool isReadyPlay {get;private set;}
+    
+    private RoomPlayerItem playerItem;
 
     public void Init(){
-        playerItem = ResourceManager.Instance.Load<PlayerItem>("Prefabs/PlayerItem");
     }
 
     public void Clear(){
-        GameObject.Destroy(playerItem.gameObject);
-        playerItem = null;
+        if(playerItem != null){
+            GameObject.Destroy(playerItem.gameObject);
+            playerItem = null;
+        }
     }
 
     public void SetData(PlayerData data){
@@ -21,5 +24,31 @@ public class PlayerControl {
 
     public void SetRoom(RoomControl control){
         roomControl = control;
+    }
+
+    public void LeaveRoom(RoomControl control){
+        if(playerItem != null){
+            GameObject.Destroy(playerItem);
+            playerItem = null;
+        }
+    }
+
+    public void SetSeat(Transform parent){
+        if(playerItem == null){
+            playerItem = ResourceManager.Instance.Load<RoomPlayerItem>("Prefabs/RoomPlayerItem.prefab");
+        }
+        playerItem.transform.SetParent(parent,false);
+        playerItem.SetData(playerData);
+        playerItem.OnReady = onReady;
+    }
+
+    private void onReady(bool isReady){
+        isReadyPlay = isReady;
+        roomControl.CheckState();
+    }
+
+    /// test
+    public void Ready(){
+        onReady(true);
     }
 }

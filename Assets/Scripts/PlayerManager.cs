@@ -32,6 +32,17 @@ public class PlayerManager : Singleton<PlayerManager> {
         data.UUID = UUID;
         data.Name = string.Format("Player_{0}",data.UUID);
         player.SetData(data);
+        players.Add(player);
         return player;
+    }
+
+    /// 获得用户对象
+    public PlayerControl GetPlayer(int uid){
+        for(int i = 0;i < players.Count;++i){
+            if(players[i].playerData.UUID == uid){
+                return players[i];
+            }
+        }
+        return null;
     }
 }

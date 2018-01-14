@@ -10,8 +10,18 @@ public class RoomManager : Singleton<RoomManager> {
     private LobbyItem lobby;
     private RoomControl curRoom;
 
+    private int roomUId = 0;
+    private int RoomUId { 
+        get {
+            return roomUId++;
+        }
+    }
+
     public void Init(){
         rooms = new List<RoomControl>();
+
+        SignalManager.Instance.Create<LobbyItem.LobbyJoinSignal>().AddListener(onJoinRoom);
+        SignalManager.Instance.Create<LobbyItem.LobbyCreateSignal>().AddListener(onCreateRoom);
     }
 
     public void Clear(){
@@ -28,13 +38,14 @@ public class RoomManager : Singleton<RoomManager> {
     }
 
     public void EnterRoom(){
-        curRoom = CreateRoom();
     }
 
     public RoomControl CreateRoom(){
         RoomControl control = new RoomControl();
         control.Init();
+        control.SetRoomID(RoomUId);
         rooms.Add(control);
+        updateAllRooms();
         return control;
     }
 
@@ -43,6 +54,7 @@ public class RoomManager : Singleton<RoomManager> {
         if(index != -1){
             control.Clear();
             rooms.RemoveAt(index);
+            updateAllRooms();
             return true;
         }
         return false;
@@ -73,12 +85,39 @@ public class RoomManager : Singleton<RoomManager> {
     }
 
     private void updateAllRooms(){
-        for(int i = 0;i < 5;++i){
+        for(int i = 0;i < rooms.Count;++i){
             LobbyRoomItem item = ResourceManager.Instance.Load<LobbyRoomItem>("Prefabs/LobbyRoomItem.prefab");
             item.transform.SetParent(lobby.roomList,false);
-            RoomControl room = CreateRoom();
-            room.SetRoomID(0);
-            item.SetRoomId(0);
+            item.SetRoomId(rooms[i].RoomId);
+        }
+    }
+
+    /// 快速加入房间
+    private void onJoinRoom(){
+        if(rooms.Count > 0){
+            RoomControl rc = rooms[Random.Range(0,rooms.Count)];
+            rc.AddPlayer(PlayerManager.Instance.PlayerSelf);
+        }
+    }
+
+    /// 创建房间
+    private void onCreateRoom(){
+        RoomControl room = CreateRoom();
+        room.AddPlayer(PlayerManager.Instance.PlayerSelf);
+        GameManager.Instance.ChangeState(GameStateEnum.Room);
+
+        addRobot();
+    }
+
+    private void addRobot(){
+        RoomControl rc = GetRoom(PlayerManager.Instance.PlayerSelf.roomControl.RoomId);
+        // test 添加机器人测试
+        for(int i = 0;i < 3;++i){
+            PlayerControl pc = PlayerManager.Instance.CreatePlayer();
+            pc.Init();
+            pc.SetRoom(rc);
+            RoomManager.Instance.AddPlayer(rc,pc);
+            pc.Ready();
         }
     }
 }

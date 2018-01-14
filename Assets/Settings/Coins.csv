@@ -1,0 +1,8 @@
+ID;标识;名称;面值
+Id(int);Sign(string);Name(string);Value(int)
+1;Zero;0;0
+2;Ten;10;10
+3;Fifty;50;50
+4;Hundred;100;100
+5;TwoHundred;200;200
+6;FiveHundred;500;500

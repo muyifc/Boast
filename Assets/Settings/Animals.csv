@@ -1,0 +1,11 @@
+ID;标识;名称;面值
+Id(int);Sign(string);Name(string);Value(int)
+1;Chicken;鸡;10
+2;Goose;鹅;40
+3;Cat;猫;90
+4;Sheep;绵羊;250
+5;Goat;山羊;350
+6;Donkey;驴;500
+7;Pig;猪;650
+8;Cow;牛;800
+9;Horse;马;1000
