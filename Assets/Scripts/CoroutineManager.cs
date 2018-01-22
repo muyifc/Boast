@@ -1,13 +1,16 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class CoroutineManager : Singleton<CoroutineManager> {
     public class InnerCoroutine : MonoBehaviour {}
 
     private InnerCoroutine innerCoroutine;
+    private Dictionary<float,WaitForSeconds> waits;
 
     public CoroutineManager(){
         innerCoroutine = new GameObject("_Coroutine").AddComponent<InnerCoroutine>();
+        waits = new Dictionary<float, WaitForSeconds>();
     }
 
     public Coroutine StartCoroutine(IEnumerator enumerator){
@@ -15,7 +18,12 @@ public class CoroutineManager : Singleton<CoroutineManager> {
     }
 
     public void StartCoroutineWithCallback(IEnumerator enumerator,System.Action<object> callback){
-        StartCoroutine(StartCoroutineInner(enumerator,callback));
+        StartCoroutine(startCoroutineInner(enumerator,callback));
+    }
+
+    /// 延迟执行
+    public void StartCoroutineWait(float wait,System.Action callback){
+        StartCoroutine(waitCoroutine(wait,callback));
     }
 
     public void StopCoroutine(Coroutine c){
@@ -26,8 +34,16 @@ public class CoroutineManager : Singleton<CoroutineManager> {
         innerCoroutine.StopAllCoroutines();
     }
 
-    private IEnumerator StartCoroutineInner(IEnumerator enumerator,System.Action<object> callback){
+    private IEnumerator startCoroutineInner(IEnumerator enumerator,System.Action<object> callback){
         yield return StartCoroutine(enumerator);
         callback(enumerator.Current);
+    }
+
+    private IEnumerator waitCoroutine(float wait,System.Action callback){
+        if(!waits.ContainsKey(wait)){
+            waits.Add(wait,new WaitForSeconds(wait));
+        }
+        yield return waits[wait];
+        callback();
     }
 }

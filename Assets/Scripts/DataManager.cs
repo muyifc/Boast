@@ -17,8 +17,15 @@ public class DataManager : Singleton<DataManager> {
         string fileName = typeof(T).FullName;
         List<T> list = new List<T>();
         if(cached.ContainsKey(fileName)){
-            for(int i = 1;i <= cached.Count;++i){
-                list.Add(Get<T>(i));
+            int id = 1;
+            while(true){
+                T data = Get<T>(id);
+                if(data != null){
+                    list.Add(data);
+                    id++;
+                }else{
+                    break;
+                }
             }
         }
         return list;

@@ -42,6 +42,18 @@ public class PlayerControl {
         playerItem.OnReady = onReady;
     }
 
+    public Transform GetHead(){
+        return playerItem.transform;
+    }
+
+    public Transform GetCardHand(){
+        return playerItem.transform.parent != null ? playerItem.transform.Find("CardHand") : null;
+    }
+
+    public Transform GetCardLibrary(){
+        return playerItem.transform.parent != null ? playerItem.transform.Find("CardLibrary") : null;
+    }
+
     private void onReady(bool isReady){
         isReadyPlay = isReady;
         roomControl.CheckState();

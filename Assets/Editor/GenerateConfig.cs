@@ -131,12 +131,17 @@ public class GenerateConfig : EditorWindow {
             string[] lines = File.ReadAllLines(files[i]);
             if(lines.Length > 2){
                 string txt = createCSFile(Path.GetFileNameWithoutExtension(files[i]),lines[0].Split(';'),lines[1].Split(';'));
+                if(string.IsNullOrEmpty(txt)) continue;
                 saveFile(txt,string.Format("{0}/{1}.cs",config.outfolder,Path.GetFileNameWithoutExtension(files[i])));
             }
         }
     }
 
    private string createCSFile(string fileName,string[] notes,string[] fields){
+        if(notes.Length != fields.Length){
+            EditorUtility.DisplayDialog("Warning!!!",string.Format("{0}表注释列数与标识列数不匹配",fileName),"确定");
+            return "";
+        }
         StringBuilder sb = new StringBuilder();
         sb.Append(head(fileName));
         sb.AppendFormat("    public override int ID() {{ return {0}; }}\n",parseField(fields[0])[0]);

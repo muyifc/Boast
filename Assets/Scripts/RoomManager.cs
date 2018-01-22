@@ -7,7 +7,6 @@ public class RoomManager : Singleton<RoomManager> {
     public const int RoomMaxPlayer = 4;
 
     private List<RoomControl> rooms;
-    private LobbyItem lobby;
     private RoomControl curRoom;
 
     private int roomUId = 0;
@@ -31,10 +30,7 @@ public class RoomManager : Singleton<RoomManager> {
 
     /// 进入大厅
     public void EnterLobby(){
-        lobby = ResourceManager.Instance.Load<LobbyItem>("Prefabs/Lobby.prefab");
-        lobby.transform.SetParent(SceneManager.Instance.UICanvas.transform,false);
-    
-        updateAllRooms();
+        SceneManager.Instance.CreateLobby();
     }
 
     public void EnterRoom(){
@@ -45,7 +41,6 @@ public class RoomManager : Singleton<RoomManager> {
         control.Init();
         control.SetRoomID(RoomUId);
         rooms.Add(control);
-        updateAllRooms();
         return control;
     }
 
@@ -54,7 +49,6 @@ public class RoomManager : Singleton<RoomManager> {
         if(index != -1){
             control.Clear();
             rooms.RemoveAt(index);
-            updateAllRooms();
             return true;
         }
         return false;
@@ -84,14 +78,6 @@ public class RoomManager : Singleton<RoomManager> {
         ClearRoom(control);
     }
 
-    private void updateAllRooms(){
-        for(int i = 0;i < rooms.Count;++i){
-            LobbyRoomItem item = ResourceManager.Instance.Load<LobbyRoomItem>("Prefabs/LobbyRoomItem.prefab");
-            item.transform.SetParent(lobby.roomList,false);
-            item.SetRoomId(rooms[i].RoomId);
-        }
-    }
-
     /// 快速加入房间
     private void onJoinRoom(){
         if(rooms.Count > 0){
@@ -114,7 +100,7 @@ public class RoomManager : Singleton<RoomManager> {
         // test 添加机器人测试
         for(int i = 0;i < 3;++i){
             PlayerControl pc = PlayerManager.Instance.CreatePlayer();
-            pc.Init();
+            pc.playerData.isRobot = true;
             pc.SetRoom(rc);
             RoomManager.Instance.AddPlayer(rc,pc);
             pc.Ready();

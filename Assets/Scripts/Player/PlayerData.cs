@@ -9,4 +9,6 @@ public class PlayerData {
     public int Exp;
 
     public SexEnum Sex; 
+    
+    public bool isRobot;
 }

@@ -10,6 +10,12 @@ public class LobbyRoomItem : MonoBehaviour {
 
     public void SetRoomId(int id){
         roomId = id;
+        roomName.text = string.Format("Room {0}",id);
+    }
+
+    public void SetRoomPlayer(int num){
+        curNum.text = string.Format("Count {0}/{1}",num,RoomManager.RoomMaxPlayer);
+        btnJoin.interactable = num < RoomManager.RoomMaxPlayer;
     }
 
     void Awake(){

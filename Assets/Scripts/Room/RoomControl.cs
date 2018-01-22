@@ -5,25 +5,43 @@ using System.Collections.Generic;
 public class RoomControl {
     public int RoomId {get;private set;}
 
-    private List<PlayerControl> roomPlayers;
+    public List<PlayerControl> roomPlayers;
 
     private RoomItem roomItem;
 
     private RoomStateEnum stateEnum;
-    
+    private LobbyRoomItem lobbyItem;
+
+    private SendCardControl sendCardControl;
+
     public void Init(){
         roomPlayers = new List<PlayerControl>(RoomManager.RoomMaxPlayer);
         stateEnum = RoomStateEnum.Ready;
+        sendCardControl = new SendCardControl();
+        sendCardControl.Init(this);
     }
 
     public void Clear(){
         roomPlayers.Clear();
         roomPlayers = null;
+        clearLobbyItem();
         clearRoomInstance();
+        sendCardControl.Clear();
+        sendCardControl = null;
     }
 
     public void SetRoomID(int roomId){
         RoomId = roomId;
+        createLobbyItem();
+    }
+
+    public Transform GetRoomDesk(){
+        return roomItem.GetDesk();
+    }
+
+    public void MoveCard(RoomCardPosEnum from,RoomCardPosEnum to,int uid){
+        CardControl cc = sendCardControl.GetCardControl(uid);
+        cc.MoveCard(GetCardPos(from),GetCardPos(to),to);
     }
 
     /// 添加玩家
@@ -41,6 +59,7 @@ public class RoomControl {
             }
             updateSeat();
         }
+        lobbyItem.SetRoomPlayer(roomPlayers.Count);
     }
 
     // 移除玩家
@@ -53,7 +72,16 @@ public class RoomControl {
                 clearRoomInstance();
             }
         }
-        if(roomPlayers.Count == 0){
+        lobbyItem.SetRoomPlayer(roomPlayers.Count);
+        
+        bool isAllRobot = true;
+        for(int i = 0;i < roomPlayers.Count;++i){
+            if(roomPlayers[i].playerData.isRobot == false){
+                isAllRobot = false;
+                break;
+            }
+        }
+        if(roomPlayers.Count == 0 || isAllRobot){
             RoomManager.Instance.ClearRoom(this);
         }
     }
@@ -74,20 +102,25 @@ public class RoomControl {
                         changeState(RoomStateEnum.Start);
                     }
                 }
-                break;
+            break;
+            case RoomStateEnum.Start:
+            break;
         }
     }
 
+    /// 状态切换
     private void changeState(RoomStateEnum stateEnum){
-        Debug.Log("Change State:"+stateEnum.ToString());
         this.stateEnum = stateEnum;
         switch(stateEnum){
             case RoomStateEnum.Ready:
             break;
             case RoomStateEnum.Start:
-            CoroutineManager.Instance.StartCoroutine(onWaitStart());
+                sendCardControl.InitDeskCard(()=>{
+                    changeState(RoomStateEnum.Send);
+                });
             break;
             case RoomStateEnum.Send:
+                sendCardControl.StartGameSendCard();
             break;
         }
     }
@@ -99,9 +132,25 @@ public class RoomControl {
     }
 
     private void clearRoomInstance(){
+        if(roomItem == null) return;
         roomItem.OnClose = null;
         GameObject.Destroy(roomItem.gameObject);
         roomItem = null;
+    }
+
+    private void createLobbyItem(){
+        if(lobbyItem == null){
+            lobbyItem = ResourceManager.Instance.Load<LobbyRoomItem>("Prefabs/LobbyRoomItem.prefab");
+            lobbyItem.transform.SetParent(SceneManager.Instance.Lobby.roomList,false);
+            lobbyItem.SetRoomId(RoomId);
+        }
+    }
+
+    private void clearLobbyItem(){
+        if(lobbyItem != null){
+            GameObject.Destroy(lobbyItem.gameObject);
+            lobbyItem = null;
+        }
     }
 
     /// 更新玩家座次
@@ -115,9 +164,35 @@ public class RoomControl {
         }
     }
 
-    private IEnumerator onWaitStart(){
-        yield return new WaitForSeconds(1.0f);
-        changeState(RoomStateEnum.Send);
+    /// 舞台中卡牌的对应位置
+    private Transform GetCardPos(RoomCardPosEnum posEnum,int playerUId = 0){
+        Transform pos = null;
+        switch(posEnum){
+            case RoomCardPosEnum.PublicDesk:
+                pos = GetRoomDesk();
+            break;
+            case RoomCardPosEnum.PlayerHand:
+                PlayerControl pc = PlayerManager.Instance.GetPlayer(playerUId);
+                if(pc != null){
+                    pos = pc.GetCardHand();
+                }
+            break;
+            case RoomCardPosEnum.PlayerLibrary:
+                pc = PlayerManager.Instance.GetPlayer(playerUId);
+                if(pc != null){
+                    pos = pc.GetCardLibrary();
+                }
+            break;
+            case RoomCardPosEnum.TmpRound:
+            break;
+            case RoomCardPosEnum.EndRound:
+                pos = roomItem.GetCardEndRound();
+            break;
+            case RoomCardPosEnum.WillDestroy:
+                pos = roomItem.GetWillDestroy();
+            break;
+        }
+        return pos;
     }
 
     private void onClose(){

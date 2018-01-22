@@ -1,8 +1,8 @@
-ID;标识;名称;面值
-Id(int);Sign(string);Name(string);Value(int)
-1;Zero;0;0
-2;Ten;10;10
-3;Fifty;50;50
-4;Hundred;100;100
-5;TwoHundred;200;200
-6;FiveHundred;500;500
+ID;标识;名称;面值;玩家开局拥有数;全局数量
+Id(int);Sign(string);Name(string);Value(int);InitCountPer(int);MaxCount(int)
+1;Zero;0;0;2;10
+2;Ten;10;10;4;20
+3;Fifty;50;50;1;10
+4;Hundred;100;100;0;5
+5;TwoHundred;200;200;0;5
+6;FiveHundred;500;500;0;5
