@@ -16,6 +16,11 @@ public class RoomPlayerItem : MonoBehaviour {
         btnReady.interactable = playerData == PlayerManager.Instance.PlayerSelf.playerData;
     }
 
+    /// 当前房间状态
+    public void SetRoomState(RoomStateEnum stateEnum){
+        btnReady.gameObject.SetActive(stateEnum == RoomStateEnum.Ready);
+    }
+
     void Awake(){
         nameText = gameObject.Find<Text>("Name/Text");
         btnReady = gameObject.Find<Button>("BtnReady/Button");

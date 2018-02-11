@@ -14,6 +14,9 @@ public class RoomControl {
 
     private SendCardControl sendCardControl;
 
+    // 当前回合玩家
+    private PlayerControl curRoundPlayer;
+
     public void Init(){
         roomPlayers = new List<PlayerControl>(RoomManager.RoomMaxPlayer);
         stateEnum = RoomStateEnum.Ready;
@@ -32,16 +35,10 @@ public class RoomControl {
 
     public void SetRoomID(int roomId){
         RoomId = roomId;
-        createLobbyItem();
     }
 
     public Transform GetRoomDesk(){
-        return roomItem.GetDesk();
-    }
-
-    public void MoveCard(RoomCardPosEnum from,RoomCardPosEnum to,int uid){
-        CardControl cc = sendCardControl.GetCardControl(uid);
-        cc.MoveCard(GetCardPos(from),GetCardPos(to),to);
+        return GetRoomItem().GetDesk();
     }
 
     /// 添加玩家
@@ -54,12 +51,11 @@ public class RoomControl {
             roomPlayers.Add(player);
             player.SetRoom(this);
             if(player == PlayerManager.Instance.PlayerSelf){
-                createRoomInstance();
-                roomItem.SetRoomInfo(RoomId);
+                GetRoomItem().SetRoomInfo(RoomId);
             }
             updateSeat();
         }
-        lobbyItem.SetRoomPlayer(roomPlayers.Count);
+        GetLobbyItem().SetRoomPlayer(roomPlayers.Count);
     }
 
     // 移除玩家
@@ -72,7 +68,7 @@ public class RoomControl {
                 clearRoomInstance();
             }
         }
-        lobbyItem.SetRoomPlayer(roomPlayers.Count);
+        GetLobbyItem().SetRoomPlayer(roomPlayers.Count);
         
         bool isAllRobot = true;
         for(int i = 0;i < roomPlayers.Count;++i){
@@ -86,26 +82,85 @@ public class RoomControl {
         }
     }
 
+    /// 根据位置获取所在父级
+    public Transform GetTransByPos(RoomCardPosEnum posEnum,int playerUId = -1){
+        Transform target = null;
+        switch(posEnum){
+            case RoomCardPosEnum.PublicDesk:
+                target = GetRoomDesk();
+            break;
+            case RoomCardPosEnum.PlayerHand:
+                PlayerControl pc = PlayerManager.Instance.GetPlayer(playerUId);
+                if(pc != null){
+                    target = pc.GetCardHand();
+                }
+                break;
+            case RoomCardPosEnum.PlayerLibrary:
+                pc = PlayerManager.Instance.GetPlayer(playerUId);
+                if(pc != null){
+                    target = pc.GetCardLibrary();
+                }
+                break;
+            case RoomCardPosEnum.TmpRound:
+                break;
+            case RoomCardPosEnum.EndRound:
+                target = roomItem.GetCardEndRound();
+                break;
+            case RoomCardPosEnum.WillDestroy:
+                target = roomItem.GetWillDestroy();
+                break;
+        }
+        return target;
+    }
+
+    /// 舞台中卡牌的对应坐标
+    public Vector3 GetCardPos(RoomCardPosEnum posEnum,int playerUId = -1){
+        Transform target = GetTransByPos(posEnum,playerUId);
+        if(target != null){
+            CardLayoutData layoutData = target.GetComponent<CardLayoutData>();
+            if(layoutData != null){
+                return layoutData.GetNextPos();
+            }else{
+                return target.position;
+            }
+        }
+        return GetRoomItem().transform.position;
+    }
+
     /// 检测所有玩家是否准备好，进入下一状态
     public void CheckState(){
-        switch(stateEnum){
-            case RoomStateEnum.Ready:
-                if(roomPlayers.Count == RoomManager.RoomMaxPlayer){
-                    bool isReady = true;
-                    for(int i = 0;i < roomPlayers.Count;++i){
-                        if(roomPlayers[i].isReadyPlay == false){
-                            isReady = false;
-                            break;
-                        }
-                    }
-                    if(isReady){
-                        changeState(RoomStateEnum.Start);
+        if(stateEnum == RoomStateEnum.Ready){
+            if(roomPlayers.Count == RoomManager.RoomMaxPlayer){
+                bool isReady = true;
+                for(int i = 0;i < roomPlayers.Count;++i){
+                    if(roomPlayers[i].isReadyPlay == false){
+                        isReady = false;
+                        break;
                     }
                 }
-            break;
-            case RoomStateEnum.Start:
-            break;
+                if(isReady){
+                    changeState(RoomStateEnum.Start);
+                }
+            }
         }
+        // switch(stateEnum){
+        //     case RoomStateEnum.Ready:
+        //         if(roomPlayers.Count == RoomManager.RoomMaxPlayer){
+        //             bool isReady = true;
+        //             for(int i = 0;i < roomPlayers.Count;++i){
+        //                 if(roomPlayers[i].isReadyPlay == false){
+        //                     isReady = false;
+        //                     break;
+        //                 }
+        //             }
+        //             if(isReady){
+        //                 changeState(RoomStateEnum.Start);
+        //             }
+        //         }
+        //     break;
+        //     case RoomStateEnum.Start:
+        //     break;
+        // }
     }
 
     /// 状态切换
@@ -113,22 +168,36 @@ public class RoomControl {
         this.stateEnum = stateEnum;
         switch(stateEnum){
             case RoomStateEnum.Ready:
-            break;
+                break;
             case RoomStateEnum.Start:
                 sendCardControl.InitDeskCard(()=>{
-                    changeState(RoomStateEnum.Send);
+                    CoroutineManager.Instance.StartCoroutineWait(0.3f,()=>{
+                        changeState(RoomStateEnum.Send);
+                    });
                 });
-            break;
+                break;
             case RoomStateEnum.Send:
                 sendCardControl.StartGameSendCard();
-            break;
+                changeState(RoomStateEnum.Playing);
+                break;
+            case RoomStateEnum.Playing:
+                if(curRoundPlayer == null){
+                    curRoundPlayer = PlayerManager.Instance.PlayerSelf;
+                }
+                break;
+        }
+        for(int i = 0;i < roomPlayers.Count;++i){
+            roomPlayers[i].SetRoomState(stateEnum);
         }
     }
 
-    private void createRoomInstance(){
-        roomItem = ResourceManager.Instance.Load<RoomItem>("Prefabs/RoomItem.prefab");
-        roomItem.transform.SetParent(SceneManager.Instance.UICanvas.transform,false);
-        roomItem.OnClose = onClose;
+    private RoomItem GetRoomItem(){
+        if(roomItem == null){
+            roomItem = ResourceManager.Instance.Load<RoomItem>("Prefabs/RoomItem.prefab");
+            roomItem.transform.SetParent(SceneManager.Instance.UICanvas.transform,false);
+            roomItem.OnClose = onClose;
+        }
+        return roomItem;
     }
 
     private void clearRoomInstance(){
@@ -138,12 +207,13 @@ public class RoomControl {
         roomItem = null;
     }
 
-    private void createLobbyItem(){
+    private LobbyRoomItem GetLobbyItem(){
         if(lobbyItem == null){
             lobbyItem = ResourceManager.Instance.Load<LobbyRoomItem>("Prefabs/LobbyRoomItem.prefab");
             lobbyItem.transform.SetParent(SceneManager.Instance.Lobby.roomList,false);
             lobbyItem.SetRoomId(RoomId);
         }
+        return lobbyItem;
     }
 
     private void clearLobbyItem(){
@@ -162,37 +232,6 @@ public class RoomControl {
                 roomPlayers[(i+index) % roomPlayers.Count].SetSeat(seats[i]);
             }
         }
-    }
-
-    /// 舞台中卡牌的对应位置
-    private Transform GetCardPos(RoomCardPosEnum posEnum,int playerUId = 0){
-        Transform pos = null;
-        switch(posEnum){
-            case RoomCardPosEnum.PublicDesk:
-                pos = GetRoomDesk();
-            break;
-            case RoomCardPosEnum.PlayerHand:
-                PlayerControl pc = PlayerManager.Instance.GetPlayer(playerUId);
-                if(pc != null){
-                    pos = pc.GetCardHand();
-                }
-            break;
-            case RoomCardPosEnum.PlayerLibrary:
-                pc = PlayerManager.Instance.GetPlayer(playerUId);
-                if(pc != null){
-                    pos = pc.GetCardLibrary();
-                }
-            break;
-            case RoomCardPosEnum.TmpRound:
-            break;
-            case RoomCardPosEnum.EndRound:
-                pos = roomItem.GetCardEndRound();
-            break;
-            case RoomCardPosEnum.WillDestroy:
-                pos = roomItem.GetWillDestroy();
-            break;
-        }
-        return pos;
     }
 
     private void onClose(){

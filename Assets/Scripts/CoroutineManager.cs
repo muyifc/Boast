@@ -21,6 +21,10 @@ public class CoroutineManager : Singleton<CoroutineManager> {
         StartCoroutine(startCoroutineInner(enumerator,callback));
     }
 
+    public void StartCoroutineWithCallback(IEnumerator enumerator,System.Action callback){
+        StartCoroutine(startCoroutineInner(enumerator,callback));
+    }
+
     /// 延迟执行
     public void StartCoroutineWait(float wait,System.Action callback){
         StartCoroutine(waitCoroutine(wait,callback));
@@ -37,6 +41,11 @@ public class CoroutineManager : Singleton<CoroutineManager> {
     private IEnumerator startCoroutineInner(IEnumerator enumerator,System.Action<object> callback){
         yield return StartCoroutine(enumerator);
         callback(enumerator.Current);
+    }
+
+    private IEnumerator startCoroutineInner(IEnumerator enumerator,System.Action callback){
+        yield return StartCoroutine(enumerator);
+        callback();
     }
 
     private IEnumerator waitCoroutine(float wait,System.Action callback){

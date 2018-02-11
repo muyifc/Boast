@@ -22,6 +22,13 @@ public class SendCardControl {
 
     // 玩家绑定的牌
     private Dictionary<int,List<int>> playerBindCards;
+    private Dictionary<int,int> cardUId2Player;
+
+    /// 卡牌位置列表
+    private Dictionary<RoomCardPosEnum,List<int>> cardPosList;
+
+    // 当前绑定的移动卡牌
+    private HashSet<int> bindMove;
 
     /// 每种动物各4张
     private const int MaxAnimalPer = 4;
@@ -29,8 +36,11 @@ public class SendCardControl {
     public void Init(RoomControl control){
         roomControl = control;
         cardUUId2Index = new Dictionary<int, int>();
-        playerBindCards = new Dictionary<int, List<int>>();
         cardUUId2Control = new Dictionary<int,CardControl>();
+        playerBindCards = new Dictionary<int, List<int>>();
+        cardUId2Player = new Dictionary<int,int>();
+        bindMove = new HashSet<int>();
+        cardPosList = new Dictionary<RoomCardPosEnum, List<int>>();
 
         initCards();
     }
@@ -40,18 +50,24 @@ public class SendCardControl {
     }
 
     /// 获取卡牌绑定的卡牌控制器
-    public CardControl GetCardControl(int uid){
-        if(cardUUId2Control.ContainsKey(uid)){
-            return cardUUId2Control[uid];
+    public CardControl GetCardControl(int cardUId){
+        if(cardUUId2Control.ContainsKey(cardUId)){
+            return cardUUId2Control[cardUId];
+        }
+        return null;
+    }
+
+    /// 当前卡牌绑定的玩家
+    public PlayerControl GetCardPlayer(int cardUId){
+        if(cardUId2Player.ContainsKey(cardUId)){
+            return PlayerManager.Instance.GetPlayer(cardUId2Player[cardUId]);
         }
         return null;
     }
 
     /// 初始化牌桌的牌
     public void InitDeskCard(System.Action callback){
-        CoroutineManager.Instance.StartCoroutineWithCallback(onInitDeskCard(),(obj)=>{
-            callback();
-        });
+        CoroutineManager.Instance.StartCoroutineWithCallback(onInitDeskCard(),callback);
     }
 
     /// 开局发牌
@@ -72,13 +88,16 @@ public class SendCardControl {
             playerBindCards.Add(playerUId,new List<int>(allCards.Length));
         }
         playerBindCards[playerUId].Add(cardUId);
-        roomControl.MoveCard(GetCardControl(cardUId).LastPosEnum,RoomCardPosEnum.PlayerHand,playerUId);
+        cardUId2Player.Add(cardUId,playerUId);
+        bindMove.Add(cardUId);
+        moveCardPosEnum(cardUId,RoomCardPosEnum.PlayerHand);
     }
 
     /// 解绑玩家与卡牌
     public void UnBindCard(int playerUId,int cardUId){
         if(playerBindCards.ContainsKey(playerUId)){
             playerBindCards[playerUId].Remove(cardUId);
+            cardUId2Player.Remove(cardUId);
         }
     }
 
@@ -117,6 +136,7 @@ public class SendCardControl {
         }
     }
 
+    /// 创建卡牌
     private Card createCard(string name,int value,Type dataType,int id,CardTypeEnum typeEnum){
         Card card = new Card(name,value);
         card.SetDataFrom(dataType,id);
@@ -158,13 +178,46 @@ public class SendCardControl {
         return null;
     }
 
+    /// 卡牌位置变更
+    private void moveCardPosEnum(int cardUId,RoomCardPosEnum toPosEnum){
+        CardControl cc = GetCardControl(cardUId);
+        if(cc.LastPosEnum == toPosEnum) return;
+        if(cc.LastPosEnum != RoomCardPosEnum.None){
+            if(cardPosList.ContainsKey(cc.LastPosEnum)){
+                int last = cardPosList[cc.LastPosEnum].IndexOf(cardUId);
+                if(last != -1){
+                    cardPosList[cc.LastPosEnum].RemoveAt(last);
+                }
+            }
+        }
+        if(toPosEnum != RoomCardPosEnum.None){
+            if(!cardPosList.ContainsKey(toPosEnum)){
+                cardPosList.Add(toPosEnum,new List<int>());
+            }
+            cardPosList[toPosEnum].Add(cardUId);
+        }
+        int playerUId = GetCardPlayer(cardUId) == null ? -1 : GetCardPlayer(cardUId).playerData.UUID;
+        Transform cardItem = cc.GetItem();
+        cardItem.SetParent(roomControl.GetTransByPos(toPosEnum,playerUId),true);
+        cardItem.localScale = Vector3.one;
+        cardItem.localRotation = Quaternion.identity;
+        cc.MoveCard(roomControl.GetCardPos(cc.LastPosEnum,playerUId),roomControl.GetCardPos(toPosEnum,playerUId),toPosEnum,onMoveCompleted);
+    }
+
     private IEnumerator onInitDeskCard(){
         int count = 0;
         while(true){
-            roomControl.MoveCard(RoomCardPosEnum.None,RoomCardPosEnum.PublicDesk,animalCards[count]);
+            moveCardPosEnum(animalCards[count],RoomCardPosEnum.PublicDesk);
             count++;
             if(count >= animalCards.Length) break;
             yield return null;
+        }
+    }
+
+    /// 单张卡片移动完成
+    private void onMoveCompleted(int cardUId){
+        if(bindMove.Remove(cardUId)){
+            GetCardPlayer(cardUId).SortHandCards();
         }
     }
 }
