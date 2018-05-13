@@ -3,25 +3,32 @@ using System.Collections;
 using System.Collections.Generic;
 
 public class RoomControl {
+    // 翻牌
+    public class FlipCardSignal : Signal<CardControl> {}
+
     public int RoomId {get;private set;}
 
     public List<PlayerControl> roomPlayers;
 
-    private RoomItem roomItem;
+    public SendCardControl sendCardControl {get;private set;}
 
+    private RoomItem roomItem;
     private RoomStateEnum stateEnum;
     private LobbyRoomItem lobbyItem;
 
-    private SendCardControl sendCardControl;
-
     // 当前回合玩家
     private PlayerControl curRoundPlayer;
+    // 当前回合的翻牌
+    private CardControl curFlipCard;
+    private RoundStateEnum roundStateEnum;
 
     public void Init(){
         roomPlayers = new List<PlayerControl>(RoomManager.RoomMaxPlayer);
         stateEnum = RoomStateEnum.Ready;
         sendCardControl = new SendCardControl();
         sendCardControl.Init(this);
+
+        SignalManager.Instance.Create<FlipCardSignal>().AddListener(onFlipCard);
     }
 
     public void Clear(){
@@ -31,6 +38,8 @@ public class RoomControl {
         clearRoomInstance();
         sendCardControl.Clear();
         sendCardControl = null;
+
+        SignalManager.Instance.Create<FlipCardSignal>().RemoveListener(onFlipCard);
     }
 
     public void SetRoomID(int roomId){
@@ -236,5 +245,15 @@ public class RoomControl {
 
     private void onClose(){
         RemovePlayer(PlayerManager.Instance.PlayerSelf);
+    }
+
+    private void onFlipCard(CardControl control){
+        if(curFlipCard == null){
+            curFlipCard = control;
+            curFlipCard.Flip();
+            roundStateEnum = RoundStateEnum.FlipAnimal;
+        }else{
+            Debug.LogWarning("本回合已翻牌，无法继续翻牌");
+        }
     }
 }

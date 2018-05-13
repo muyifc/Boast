@@ -1,8 +1,8 @@
-ID;标识;名称;面值;玩家开局拥有数;全局数量
-Id(int);Sign(string);Name(string);Value(int);InitCountPer(int);MaxCount(int)
-1;Zero;0;0;2;10
-2;Ten;10;10;4;20
-3;Fifty;50;50;1;10
-4;Hundred;100;100;0;5
-5;TwoHundred;200;200;0;5
-6;FiveHundred;500;500;0;5
+ID;标识;名称;面值;玩家开局拥有数;全局数量;卡面名
+Id(int);Sign(string);Name(string);Value(int);InitCountPer(int);MaxCount(int);IconName(string)
+1;Zero;0;0;2;10;32099312_p0
+2;Ten;10;10;4;20;32099312_p1
+3;Fifty;50;50;1;10;33563456_p0
+4;Hundred;100;100;0;5;33563456_p1
+5;TwoHundred;200;200;0;5;37473762_p0
+6;FiveHundred;500;500;0;5;37473762_p1

@@ -29,6 +29,9 @@ public class ResourceManager : Singleton<ResourceManager> {
 #if UNITY_EDITOR
         path = getRelatePath(path);
         Object asset = AssetDatabase.LoadAssetAtPath<Object>(path);
+        if(asset == null){
+            Debug.LogWarning("该路径下无资源："+path);
+        }
         return asset;
 #endif  
     }

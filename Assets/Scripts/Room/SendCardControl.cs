@@ -197,7 +197,7 @@ public class SendCardControl {
             cardPosList[toPosEnum].Add(cardUId);
         }
         int playerUId = GetCardPlayer(cardUId) == null ? -1 : GetCardPlayer(cardUId).playerData.UUID;
-        Transform cardItem = cc.GetItem();
+        Transform cardItem = cc.GetItem().transform;
         cardItem.SetParent(roomControl.GetTransByPos(toPosEnum,playerUId),true);
         cardItem.localScale = Vector3.one;
         cardItem.localRotation = Quaternion.identity;

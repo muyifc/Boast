@@ -6,6 +6,9 @@ public class CardControl {
     public Card cardData {get;private set;}
     public RoomCardPosEnum LastPosEnum { get; private set; }
     
+    // 是否翻到正面
+    private bool isFlipFront;
+
     private CardItem cardItem;
     private Action<int> onMoveCompleted;
     private Coroutine moveCoroutine;
@@ -17,21 +20,41 @@ public class CardControl {
         LastPosEnum = RoomCardPosEnum.None;
     }
 
-    public Transform GetItem(){
+    public CardItem GetItem(){
         if(cardItem == null){
             cardItem = ResourceManager.Instance.Load<CardItem>("Prefabs/CardItem.prefab");
-            cardItem.SetData(cardData);
+            cardItem.SetData(this);
         }
-        return cardItem.transform;
+        return cardItem;
+    }
+
+    /// 翻卡牌
+    public bool Flip(){
+        isFlipFront = !isFlipFront;
+        GetItem().ChangePosEnum();
+        return isFlipFront;
+    }
+
+    /// 是否本人卡牌
+    public bool IsSelfCard(){
+        if(cardData == null) return false;
+        return PlayerManager.Instance.PlayerSelf.roomControl.sendCardControl.GetCardPlayer(cardData.UUID) == PlayerManager.Instance.PlayerSelf;
+    }
+
+    /// 是否显示卡面
+    public bool IsShowContent(){
+        return IsSelfCard() || 
+        (PlayerManager.Instance.PlayerSelf.roomControl.sendCardControl.GetCardControl(cardData.UUID).LastPosEnum == RoomCardPosEnum.PublicDesk && isFlipFront);
     }
 
     /// from,to = position
     public void MoveCard(Vector3 from,Vector3 to,RoomCardPosEnum toPosEnum,System.Action<int> onMoveCompleted){
         if(moveCoroutine != null) CoroutineManager.Instance.StopCoroutine(moveCoroutine);
-        GetItem().position = from;
+        GetItem().transform.position = from;
         this.onMoveCompleted = onMoveCompleted;
         moveCoroutine = CoroutineManager.Instance.StartCoroutine(move(to));
         LastPosEnum = toPosEnum;
+        cardItem.ChangePosEnum();
         setScale();
     }
 
@@ -39,17 +62,17 @@ public class CardControl {
     private void setScale(){
         switch(LastPosEnum){
             case RoomCardPosEnum.PublicDesk:
-                GetItem().localScale = new Vector3(0.3f,0.3f,0.3f);
+                GetItem().transform.localScale = new Vector3(0.3f,0.3f,0.3f);
                 break;
             default:
-                GetItem().localScale = Vector3.one;
+                GetItem().transform.localScale = Vector3.one;
                 break;
         }
     }
 
     private IEnumerator move(Vector3 to,float duration = 0.3f){
         float time = 0;
-        Transform item = GetItem();
+        Transform item = GetItem().transform;
         yield return null;
         while(true){
             float step = Mathf.Clamp01(time / duration);

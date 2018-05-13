@@ -16,6 +16,10 @@ public class GameManager : Singleton<GameManager> {
         ChangeState(GameStateEnum.Lobby);
     }
 
+    public void Update(){
+        
+    }
+
     public void ChangeState(GameStateEnum stateEnum){
         this.stateEnum = stateEnum;
         switch(stateEnum){

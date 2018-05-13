@@ -11,6 +11,6 @@ public class Main : MonoBehaviour {
     }
 
     void Update() {
-
+        GameManager.Instance.Update();
     }
 }

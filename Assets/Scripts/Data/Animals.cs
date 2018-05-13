@@ -12,11 +12,15 @@ public class Animals : Data {
     // 面值
     public int Value;
 
+    // 卡面名
+    public string IconName;
+
     public override void Parse(string data){
         string[] split = data.Split(';');
         Id = intValue(split[0].ToString());
         Sign = stringValue(split[1].ToString());
         Name = stringValue(split[2].ToString());
         Value = intValue(split[3].ToString());
+        IconName = stringValue(split[4].ToString());
     }
 }

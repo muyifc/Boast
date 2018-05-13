@@ -18,6 +18,9 @@ public class Coins : Data {
     // 全局数量
     public int MaxCount;
 
+    // 卡面名
+    public string IconName;
+
     public override void Parse(string data){
         string[] split = data.Split(';');
         Id = intValue(split[0].ToString());
@@ -26,5 +29,6 @@ public class Coins : Data {
         Value = intValue(split[3].ToString());
         InitCountPer = intValue(split[4].ToString());
         MaxCount = intValue(split[5].ToString());
+        IconName = stringValue(split[6].ToString());
     }
 }
