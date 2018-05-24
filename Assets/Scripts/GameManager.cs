@@ -17,7 +17,7 @@ public class GameManager : Singleton<GameManager> {
     }
 
     public void Update(){
-        
+        RoomManager.Instance.Update();
     }
 
     public void ChangeState(GameStateEnum stateEnum){

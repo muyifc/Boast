@@ -22,6 +22,11 @@ public class RoomControl {
     private CardControl curFlipCard;
     private RoundStateEnum roundStateEnum;
 
+    /// 选择牌后随机决策时间
+    private float chooseCD = 1;
+    private float chooseTime;
+    private SaleCardEnum curSaleEnum;
+
     public void Init(){
         roomPlayers = new List<PlayerControl>(RoomManager.RoomMaxPlayer);
         stateEnum = RoomStateEnum.Ready;
@@ -48,6 +53,16 @@ public class RoomControl {
 
     public Transform GetRoomDesk(){
         return GetRoomItem().GetDesk();
+    }
+
+    public void Update(){
+        if(curFlipCard != null){
+            chooseTime += Time.deltaTime;
+            if(chooseTime >= chooseCD){
+                chooseTime -= chooseCD;
+                PlayerControl player = roomPlayers[Random.Range(0,roomPlayers.Count)];
+            }
+        }
     }
 
     /// 添加玩家
@@ -152,24 +167,6 @@ public class RoomControl {
                 }
             }
         }
-        // switch(stateEnum){
-        //     case RoomStateEnum.Ready:
-        //         if(roomPlayers.Count == RoomManager.RoomMaxPlayer){
-        //             bool isReady = true;
-        //             for(int i = 0;i < roomPlayers.Count;++i){
-        //                 if(roomPlayers[i].isReadyPlay == false){
-        //                     isReady = false;
-        //                     break;
-        //                 }
-        //             }
-        //             if(isReady){
-        //                 changeState(RoomStateEnum.Start);
-        //             }
-        //         }
-        //     break;
-        //     case RoomStateEnum.Start:
-        //     break;
-        // }
     }
 
     /// 状态切换
@@ -252,6 +249,8 @@ public class RoomControl {
             curFlipCard = control;
             curFlipCard.Flip();
             roundStateEnum = RoundStateEnum.FlipAnimal;
+            chooseTime = 0;
+            curSaleEnum = Random.value < 0.5f ? SaleCardEnum.SaleAnimal : SaleCardEnum.BehindBusiness;
         }else{
             Debug.LogWarning("本回合已翻牌，无法继续翻牌");
         }

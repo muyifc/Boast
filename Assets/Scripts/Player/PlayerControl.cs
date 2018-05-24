@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class PlayerControl {
     public PlayerData playerData;
@@ -63,6 +64,18 @@ public class PlayerControl {
 
     public Transform GetCardLibrary(){
         return roomSeat != null ? roomSeat.Find("CardLibrary") : null;
+    }
+
+    /// 获取当前拥有的动物卡
+    public List<int> GetAnimalCards(){
+        List<int> allcards = roomControl.sendCardControl.GetBindCards(playerData.UUID);
+        List<int> ret = new List<int>();
+        for(int i = 0;i < allcards.Count;++i){
+            if(roomControl.sendCardControl.GetCardControl(allcards[i]).cardData.CardTypeEnum == CardTypeEnum.Animal){
+                ret.Add(allcards[i]);
+            }
+        }
+        return ret;
     }
 
     private RoomPlayerItem GetPlayerItem(){

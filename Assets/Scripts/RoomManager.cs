@@ -28,6 +28,12 @@ public class RoomManager : Singleton<RoomManager> {
         rooms = null;
     }
 
+    public void Update(){
+        if(curRoom != null){
+            curRoom.Update();
+        }
+    }
+
     /// 进入大厅
     public void EnterLobby(){
         SceneManager.Instance.CreateLobby();

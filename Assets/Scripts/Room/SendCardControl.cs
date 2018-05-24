@@ -101,6 +101,14 @@ public class SendCardControl {
         }
     }
 
+    /// 所有的绑定卡
+    public List<int> GetBindCards(int playerUId){
+        if(playerBindCards.ContainsKey(playerUId)){
+            return playerBindCards[playerUId];
+        }
+        return null;
+    }
+
     /// 开局生成本局用到的所有卡牌
     private void initCards(){
         List<Animals> animals = DataManager.Instance.GetAll<Animals>();
