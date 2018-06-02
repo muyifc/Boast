@@ -9,8 +9,10 @@ public class PlayerControl {
     
     private RoomPlayerItem playerItem;
     private Transform roomSeat;
+    private List<CardControl> bidCards;
 
     public void Init(){
+        SignalManager.Instance.Create<RoomControl.NotifyBidSignal>().AddListener(onSaleForBid);
     }
 
     public void Clear(){
@@ -18,6 +20,7 @@ public class PlayerControl {
             GameObject.Destroy(playerItem.gameObject);
             playerItem = null;
         }
+        SignalManager.Instance.Create<RoomControl.NotifyBidSignal>().RemoveListener(onSaleForBid);
     }
 
     public void SetData(PlayerData data){
@@ -95,5 +98,49 @@ public class PlayerControl {
     /// test
     public void Ready(){
         onReady(true);
+    }
+
+    /// 同意购买
+    public void PayFlipCard(){
+        if(bidCards != null){
+            for(int i = 0;i < bidCards.Count;++i){
+                roomControl.sendCardControl.UnBindCard(playerData.UUID,bidCards[i].cardData.UUID);
+                roomControl.sendCardControl.BindCard(roomControl.curRoundPlayer.playerData.UUID,bidCards[i].cardData.UUID);
+            }
+            roomControl.sendCardControl.BindCard(playerData.UUID,roomControl.curFlipCard.cardData.UUID);
+        }
+        bidCards = null;
+    }
+
+    private void onSaleForBid(){
+        if(this == roomControl.curRoundPlayer) return;
+        GetPlayerItem().ShowBidProcess(true);
+        CoroutineManager.Instance.StartCoroutineWait(Random.value+0.5f,onCompleteBid);
+    }
+
+    /// 完成思考，开始出价
+    private void onCompleteBid(){
+        int value = roomControl.CurBidPrice;
+        // TODO 电脑策略，暂时使用3种
+        List<int> cards = roomControl.sendCardControl.GetBindCards(playerData.UUID);
+        bidCards = new List<CardControl>();
+        int curCardPrice = 0;
+        for(int i = 0;i < cards.Count;++i){
+            CardControl card = roomControl.sendCardControl.GetCardControl(cards[i]);
+            Coins data = card.cardData.GetData<Coins>();
+            if(data != null){
+                    // TODO 最优解不同面值组合刚好达到目标价格
+                    // 临时简单叠加，够了就不继续了
+                bidCards.Add(card);
+                curCardPrice += data.Value;
+                if(curCardPrice > value){
+                    break;
+                }
+            }
+        }
+        if(curCardPrice > value){
+            SignalManager.Instance.Create<RoomControl.CompleteBidSignal>().Dispatch(this,curCardPrice);
+            GetPlayerItem().ShowBidPrice(curCardPrice);
+        }
     }
 }

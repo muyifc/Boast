@@ -14,6 +14,7 @@ public class CardItem : MonoBehaviour {
     private Image selectImage;
 
     private int lastSiblingIndex;
+    private bool isSelect;
 
     public void SetData(CardControl control){
         this.control = control;
@@ -57,6 +58,12 @@ public class CardItem : MonoBehaviour {
             // Texture2D tex = ResourceManager.Instance.LoadAs<Texture2D>(path);
             // iconImage.sprite = Sprite.Create(tex,new Rect(0,0,tex.width,tex.height),new Vector2(0.5f,0.5f));
         }
+    }
+
+    /// 是否选择卡牌
+    public void Select(bool isSelect){
+        this.isSelect = isSelect;
+        selectImage.gameObject.SetActive(isSelect);
     }
 
     void Awake(){

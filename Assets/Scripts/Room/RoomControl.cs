@@ -5,6 +5,10 @@ using System.Collections.Generic;
 public class RoomControl {
     // 翻牌
     public class FlipCardSignal : Signal<CardControl> {}
+    // 翻牌通知开始出价
+    public class NotifyBidSignal : Signal {}
+    // 完成出价
+    public class CompleteBidSignal : Signal<PlayerControl,int> {}
 
     public int RoomId {get;private set;}
 
@@ -17,15 +21,23 @@ public class RoomControl {
     private LobbyRoomItem lobbyItem;
 
     // 当前回合玩家
-    private PlayerControl curRoundPlayer;
+    public PlayerControl curRoundPlayer;
     // 当前回合的翻牌
-    private CardControl curFlipCard;
+    public CardControl curFlipCard;
     private RoundStateEnum roundStateEnum;
 
     /// 选择牌后随机决策时间
     private float chooseCD = 1;
     private float chooseTime;
-    private SaleCardEnum curSaleEnum;
+    public SaleCardEnum curSaleEnum;
+    public PlayerControl behindBusinessPlayer;
+    // 当前出价
+    public int CurBidPrice;
+    // 等待下一个出价者
+    private bool isWaitNextBid;
+    private float startWaitNextBidTime;
+    private float WaitNextBindCD = 3; 
+    public PlayerControl CurBidPlayer;
 
     public void Init(){
         roomPlayers = new List<PlayerControl>(RoomManager.RoomMaxPlayer);
@@ -34,6 +46,7 @@ public class RoomControl {
         sendCardControl.Init(this);
 
         SignalManager.Instance.Create<FlipCardSignal>().AddListener(onFlipCard);
+        SignalManager.Instance.Create<CompleteBidSignal>().AddListener(onCompleteBid);
     }
 
     public void Clear(){
@@ -56,11 +69,12 @@ public class RoomControl {
     }
 
     public void Update(){
-        if(curFlipCard != null){
-            chooseTime += Time.deltaTime;
-            if(chooseTime >= chooseCD){
-                chooseTime -= chooseCD;
-                PlayerControl player = roomPlayers[Random.Range(0,roomPlayers.Count)];
+        if(isWaitNextBid){
+            startWaitNextBidTime += Time.deltaTime;
+            if(startWaitNextBidTime >= WaitNextBindCD){
+                isWaitNextBid = false;
+                startWaitNextBidTime = 0;
+                chooseBidToPay();
             }
         }
     }
@@ -250,9 +264,60 @@ public class RoomControl {
             curFlipCard.Flip();
             roundStateEnum = RoundStateEnum.FlipAnimal;
             chooseTime = 0;
-            curSaleEnum = Random.value < 0.5f ? SaleCardEnum.SaleAnimal : SaleCardEnum.BehindBusiness;
+            List<PlayerControl> hasSameAnimalPlayers = getSameAnimalPlayers();
+            if(hasSameAnimalPlayers.Count == 0){
+                curSaleEnum = SaleCardEnum.SaleAnimal;
+            }else{
+                // TODO 需要做成玩家选择使用那种方式拍卖
+                curSaleEnum = Random.value < 0.5f ? SaleCardEnum.SaleAnimal : SaleCardEnum.BehindBusiness;
+            }
+            CustomDebug.Log("准备拍卖模式："+curSaleEnum.ToString());
+            if(curSaleEnum == SaleCardEnum.BehindBusiness){
+                behindBusinessPlayer = hasSameAnimalPlayers[Random.Range(0,hasSameAnimalPlayers.Count)];
+            }else{
+                // 通知其他玩家出价
+                CurBidPrice = 0;
+                SignalManager.Instance.Create<NotifyBidSignal>().Dispatch();
+            }
         }else{
             Debug.LogWarning("本回合已翻牌，无法继续翻牌");
         }
+    }
+
+    /// 获取拥有与当前翻牌相同动物类型的其他玩家
+    private List<PlayerControl> getSameAnimalPlayers(){
+        List<PlayerControl> players = new List<PlayerControl>();
+        for(int i = 0;i < roomPlayers.Count;++i){
+            if(roomPlayers[i] == curRoundPlayer) continue;
+            List<int> cards = roomPlayers[i].GetAnimalCards();
+            for(int j = 0;j < cards.Count;++j){
+                if(curFlipCard.cardData.GetData<Animals>().Id == sendCardControl.GetCardControl(cards[j]).cardData.GetData<Animals>().Id){
+                    players.Add(roomPlayers[i]);
+                }
+            }
+        }
+        return players;
+    }
+
+    private void onCompleteBid(PlayerControl player,int price){
+        CurBidPlayer = player;
+        CurBidPrice = price;
+        isWaitNextBid = true;
+        startWaitNextBidTime = 0;
+    }
+
+    /// 暂无人出价，选择最后一个出价者
+    private void chooseBidToPay(){
+        if(CurBidPlayer != null){
+            CurBidPlayer.PayFlipCard();
+        }
+        CurBidPlayer = null;
+        curFlipCard = null;
+        nextRound();
+    }
+
+    /// 回合结束，下一回合
+    private void nextRound(){
+
     }
 }

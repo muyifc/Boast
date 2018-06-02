@@ -7,6 +7,8 @@ public class RoomPlayerItem : MonoBehaviour {
 
     private Text nameText;
     private Button btnReady;
+    private GameObject bidPrice;
+    private Text bidPriceText;
     private PlayerData playerData;
     private bool isReady;
 
@@ -21,9 +23,27 @@ public class RoomPlayerItem : MonoBehaviour {
         btnReady.gameObject.SetActive(stateEnum == RoomStateEnum.Ready);
     }
 
+    /// 显示思考出价中状态
+    public void ShowBidProcess(bool isProcess){
+        bidPrice.SetActive(isProcess);
+        if(isProcess){
+            bidPriceText.text = "...";
+        }
+    }
+
+    /// price -1 未选择任何卡牌
+    public void ShowBidPrice(int price = -1){
+        bidPrice.SetActive(price != -1);
+        if(price != -1){
+            bidPriceText.text = string.Format("Bid:{0}",price);
+        }
+    }
+
     void Awake(){
         nameText = gameObject.Find<Text>("Name/Text");
         btnReady = gameObject.Find<Button>("BtnReady/Button");
+        bidPrice = gameObject.FindChild("BidPrice");
+        bidPriceText = gameObject.Find<Text>("BidPrice/Text");
     }
 
     void OnEnable(){

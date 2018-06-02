@@ -14,6 +14,8 @@ public class CardControl {
     private Coroutine moveCoroutine;
     private Transform cardMoveToParent;
     private Transform cardParent;
+    // 当前卡牌是否选中
+    private bool isSelect;
 
     public void Init(Card card){
         cardData = card;
@@ -33,6 +35,22 @@ public class CardControl {
         isFlipFront = !isFlipFront;
         GetItem().ChangePosEnum();
         return isFlipFront;
+    }
+
+    /// 选择卡牌 0 默认翻转当前状态 1 强制选中 2 强制取消选择
+    public void Select(int forceSelect = 0){
+        switch(forceSelect){
+            case 0:
+            isSelect = !isSelect;
+            break;
+            case 1:
+            isSelect = true;
+            break;
+            case 2:
+            isSelect = false;
+            break;
+        }
+        GetItem().Select(isSelect);
     }
 
     /// 是否本人卡牌
