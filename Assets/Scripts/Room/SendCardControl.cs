@@ -189,7 +189,7 @@ public class SendCardControl {
     /// 卡牌位置变更
     private void moveCardPosEnum(int cardUId,RoomCardPosEnum toPosEnum){
         CardControl cc = GetCardControl(cardUId);
-        if(cc.LastPosEnum == toPosEnum) return;
+        // if(cc.LastPosEnum == toPosEnum) return;
         if(cc.LastPosEnum != RoomCardPosEnum.None){
             if(cardPosList.ContainsKey(cc.LastPosEnum)){
                 int last = cardPosList[cc.LastPosEnum].IndexOf(cardUId);

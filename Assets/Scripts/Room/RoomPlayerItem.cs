@@ -36,6 +36,7 @@ public class RoomPlayerItem : MonoBehaviour {
         bidPrice.SetActive(price != -1);
         if(price != -1){
             bidPriceText.text = string.Format("Bid:{0}",price);
+            Debug.LogFormat("Player {0} ShowPrice {1}",playerData.UUID,price);
         }
     }
 

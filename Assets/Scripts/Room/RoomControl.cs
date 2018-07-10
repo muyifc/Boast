@@ -308,6 +308,7 @@ public class RoomControl {
 
     /// 暂无人出价，选择最后一个出价者
     private void chooseBidToPay(){
+        Debug.Log("Next Round");
         if(CurBidPlayer != null){
             CurBidPlayer.PayFlipCard();
         }

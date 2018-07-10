@@ -69,6 +69,11 @@ public class PlayerControl {
         return roomSeat != null ? roomSeat.Find("CardLibrary") : null;
     }
 
+    /// 动物牌位置
+    public Transform GetCardAnimal(){
+        return roomSeat != null ? roomSeat.Find("CardAnimal") : null;
+    }
+
     /// 获取当前拥有的动物卡
     public List<int> GetAnimalCards(){
         List<int> allcards = roomControl.sendCardControl.GetBindCards(playerData.UUID);
@@ -115,7 +120,7 @@ public class PlayerControl {
     private void onSaleForBid(){
         if(this == roomControl.curRoundPlayer) return;
         GetPlayerItem().ShowBidProcess(true);
-        CoroutineManager.Instance.StartCoroutineWait(Random.value+0.5f,onCompleteBid);
+        CoroutineManager.Instance.StartCoroutineWait(Random.value+1f,onCompleteBid);
     }
 
     /// 完成思考，开始出价
@@ -129,8 +134,8 @@ public class PlayerControl {
             CardControl card = roomControl.sendCardControl.GetCardControl(cards[i]);
             Coins data = card.cardData.GetData<Coins>();
             if(data != null){
-                    // TODO 最优解不同面值组合刚好达到目标价格
-                    // 临时简单叠加，够了就不继续了
+                // TODO 最优解不同面值组合刚好达到目标价格
+                // 临时简单叠加，够了就不继续了
                 bidCards.Add(card);
                 curCardPrice += data.Value;
                 if(curCardPrice > value){

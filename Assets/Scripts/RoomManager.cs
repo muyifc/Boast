@@ -97,8 +97,8 @@ public class RoomManager : Singleton<RoomManager> {
         RoomControl room = CreateRoom();
         room.AddPlayer(PlayerManager.Instance.PlayerSelf);
         GameManager.Instance.ChangeState(GameStateEnum.Room);
-
         addRobot();
+        curRoom = room;
     }
 
     private void addRobot(){
