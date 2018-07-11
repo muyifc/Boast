@@ -90,7 +90,7 @@ public class SendCardControl {
         playerBindCards[playerUId].Add(cardUId);
         cardUId2Player.Add(cardUId,playerUId);
         bindMove.Add(cardUId);
-        moveCardPosEnum(cardUId,RoomCardPosEnum.PlayerHand);
+        MoveCardPosEnum(cardUId,RoomCardPosEnum.PlayerHand);
     }
 
     /// 解绑玩家与卡牌
@@ -125,7 +125,7 @@ public class SendCardControl {
         int count = 0;
         for(int i = 0;i < MaxAnimalPer;++i){
             for(int j = 0;j < animals.Count;++j){
-                Card card = createCard(animals[j].Name,animals[j].Value,typeof(Animals),animals[j].ID(),CardTypeEnum.Animal);
+                Card card = CreateCard(animals[j].Name,animals[j].Value,typeof(Animals),animals[j].ID(),CardTypeEnum.Animal);
                 allCards[count] = card;
                 cardUUId2Index.Add(card.UUID,count);
                 animalCards[count] = card.UUID;
@@ -135,7 +135,7 @@ public class SendCardControl {
 
         for(int j = 0;j < coins.Count;++j){
             for(int i = 0;i < coins[j].MaxCount;++i){
-                Card card = createCard(coins[j].Name,coins[j].Value,typeof(Coins),coins[j].ID(),CardTypeEnum.Coin);
+                Card card = CreateCard(coins[j].Name,coins[j].Value,typeof(Coins),coins[j].ID(),CardTypeEnum.Coin);
                 allCards[count] = card;
                 cardUUId2Index.Add(card.UUID,count);
                 coinCards[count-animalCards.Length] = card.UUID;
@@ -145,7 +145,7 @@ public class SendCardControl {
     }
 
     /// 创建卡牌
-    private Card createCard(string name,int value,Type dataType,int id,CardTypeEnum typeEnum){
+    public Card CreateCard(string name,int value,Type dataType,int id,CardTypeEnum typeEnum){
         Card card = new Card(name,value);
         card.SetDataFrom(dataType,id);
         card.SetCardType(typeEnum);
@@ -187,7 +187,7 @@ public class SendCardControl {
     }
 
     /// 卡牌位置变更
-    private void moveCardPosEnum(int cardUId,RoomCardPosEnum toPosEnum){
+    public void MoveCardPosEnum(int cardUId,RoomCardPosEnum toPosEnum){
         CardControl cc = GetCardControl(cardUId);
         // if(cc.LastPosEnum == toPosEnum) return;
         if(cc.LastPosEnum != RoomCardPosEnum.None){
@@ -206,16 +206,16 @@ public class SendCardControl {
         }
         int playerUId = GetCardPlayer(cardUId) == null ? -1 : GetCardPlayer(cardUId).playerData.UUID;
         Transform cardItem = cc.GetItem().transform;
-        cardItem.SetParent(roomControl.GetTransByPos(toPosEnum,playerUId),true);
-        cardItem.localScale = Vector3.one;
+        cardItem.SetParent(roomControl.GetTransByPos(toPosEnum,cc.cardData,playerUId),true);
+        cardItem.localScale = new Vector3(1,1,1);
         cardItem.localRotation = Quaternion.identity;
-        cc.MoveCard(roomControl.GetCardPos(cc.LastPosEnum,playerUId),roomControl.GetCardPos(toPosEnum,playerUId),toPosEnum,onMoveCompleted);
+        cc.MoveCard(roomControl.GetCardPos(cc.LastPosEnum,cc.cardData,playerUId),roomControl.GetCardPos(toPosEnum,cc.cardData,playerUId),toPosEnum,onMoveCompleted);
     }
 
     private IEnumerator onInitDeskCard(){
         int count = 0;
         while(true){
-            moveCardPosEnum(animalCards[count],RoomCardPosEnum.PublicDesk);
+            MoveCardPosEnum(animalCards[count],RoomCardPosEnum.PublicDesk);
             count++;
             if(count >= animalCards.Length) break;
             yield return null;
@@ -226,6 +226,10 @@ public class SendCardControl {
     private void onMoveCompleted(int cardUId){
         if(bindMove.Remove(cardUId)){
             GetCardPlayer(cardUId).SortHandCards();
+        }
+        // 丢弃到弃牌堆
+        if(GetCardControl(cardUId).GetItem().transform.parent == roomControl.GetTransByPos(RoomCardPosEnum.WillDestroy,null)){
+            GetCardControl(cardUId).GetItem().gameObject.SetActive(false);
         }
     }
 }

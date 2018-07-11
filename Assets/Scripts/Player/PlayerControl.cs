@@ -13,6 +13,7 @@ public class PlayerControl {
 
     public void Init(){
         SignalManager.Instance.Create<RoomControl.NotifyBidSignal>().AddListener(onSaleForBid);
+        SignalManager.Instance.Create<RoomControl.CancelBidSignal>().AddListener(onCancelBid);
     }
 
     public void Clear(){
@@ -21,6 +22,7 @@ public class PlayerControl {
             playerItem = null;
         }
         SignalManager.Instance.Create<RoomControl.NotifyBidSignal>().RemoveListener(onSaleForBid);
+        SignalManager.Instance.Create<RoomControl.CancelBidSignal>().RemoveListener(onCancelBid);
     }
 
     public void SetData(PlayerData data){
@@ -125,7 +127,7 @@ public class PlayerControl {
 
     /// 完成思考，开始出价
     private void onCompleteBid(){
-        int value = roomControl.CurBidPrice;
+        int value = roomControl.RoomData.CurBidPrice;
         // TODO 电脑策略，暂时使用3种
         List<int> cards = roomControl.sendCardControl.GetBindCards(playerData.UUID);
         bidCards = new List<CardControl>();
@@ -147,5 +149,10 @@ public class PlayerControl {
             SignalManager.Instance.Create<RoomControl.CompleteBidSignal>().Dispatch(this,curCardPrice);
             GetPlayerItem().ShowBidPrice(curCardPrice);
         }
+    }
+
+    /// 取消出价
+    private void onCancelBid(){
+        GetPlayerItem().ShowBidPrice();
     }
 }

@@ -61,8 +61,11 @@ public class CardControl {
 
     /// 是否显示卡面
     public bool IsShowContent(){
+        CardControl cc = PlayerManager.Instance.PlayerSelf.roomControl.sendCardControl.GetCardControl(cardData.UUID);
         return IsSelfCard() || 
-        (PlayerManager.Instance.PlayerSelf.roomControl.sendCardControl.GetCardControl(cardData.UUID).LastPosEnum == RoomCardPosEnum.PublicDesk && isFlipFront);
+        // cc.LastPosEnum == RoomCardPosEnum.PublicDesk && isFlipFront || 
+        cc.LastPosEnum == RoomCardPosEnum.PublicDesk || 
+        cc.LastPosEnum == RoomCardPosEnum.PlayerHand && cardData.IsT<Animals>();
     }
 
     /// from,to = position
@@ -80,6 +83,7 @@ public class CardControl {
     private void setScale(){
         switch(LastPosEnum){
             case RoomCardPosEnum.PublicDesk:
+            case RoomCardPosEnum.WillDestroy:
                 GetItem().transform.localScale = new Vector3(0.3f,0.3f,0.3f);
                 break;
             default:

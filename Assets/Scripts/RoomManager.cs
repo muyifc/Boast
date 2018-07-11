@@ -69,6 +69,10 @@ public class RoomManager : Singleton<RoomManager> {
         return null;
     }
 
+    public RoomControl GetSelfRoom(){
+        return curRoom;
+    }
+
     /// 添加玩家
     public void AddPlayer(RoomControl control,PlayerControl player){
         control.AddPlayer(player);

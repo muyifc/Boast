@@ -104,8 +104,11 @@ public class CardItem : MonoBehaviour {
 
     private void onClickCard(GameObject go){
         if(control.LastPosEnum == RoomCardPosEnum.PublicDesk){
-            // control.Flip();
-            SignalManager.Instance.Create<RoomControl.FlipCardSignal>().Dispatch(control);
+            if(RoomManager.Instance.GetSelfRoom().curRoundPlayer == PlayerManager.Instance.PlayerSelf){
+                SignalManager.Instance.Create<RoomControl.FlipCardSignal>().Dispatch(control);
+            }
+        }else if(control.LastPosEnum == RoomCardPosEnum.PlayerHand){
+            SignalManager.Instance.Create<RoomControl.SelectSelfCardSignal>().Dispatch(control);
         }
     }
 
